@@ -104,6 +104,20 @@ def cargar_y_limpiar(input_path: Path) -> pd.DataFrame:
             "Faltan columnas obligatorias: " + ", ".join(faltantes)
         )
 
+    # Power Query puede interpretar un salto de línea embebido como un nuevo
+    # registro cuando el origen se configuró con QuoteStyle.None. Se conserva
+    # el texto, pero se normalizan esos saltos para producir un registro físico
+    # por empresa y facilitar la importación en Power BI.
+    columnas_texto = df.select_dtypes(include=["object"]).columns
+    for columna in columnas_texto:
+        df[columna] = df[columna].map(
+            lambda valor: (
+                re.sub(r"\s+", " ", str(valor)).strip()
+                if not pd.isna(valor)
+                else valor
+            )
+        )
+
     for columna in MONETARY_COLUMNS:
         df[columna] = df[columna].map(limpiar_numero)
 
@@ -186,8 +200,8 @@ def evaluar_k(
         evaluacion["Codo_Distancia"] = linea - y.to_numpy()
     k_codo = int(evaluacion.loc[evaluacion["Codo_Distancia"].idxmax(), "K"])
     evaluacion["Es_Codo"] = evaluacion["K"].eq(k_codo)
-    k_optimo = int(evaluacion.loc[evaluacion["Silhouette_Score"].idxmax(), "K"])
-    return evaluacion, k_optimo, X
+    k_silhouette = int(evaluacion.loc[evaluacion["Silhouette_Score"].idxmax(), "K"])
+    return evaluacion, k_silhouette, X
 
 
 def guardar_graficas(
@@ -297,16 +311,31 @@ def construir_resumen(df: pd.DataFrame) -> pd.DataFrame:
     return resumen.sort_values("Cluster_ID", na_position="last")
 
 
-def ejecutar(input_path: Path, output_dir: Path, min_k: int, max_k: int) -> dict[str, object]:
+def ejecutar(
+    input_path: Path,
+    output_dir: Path,
+    min_k: int,
+    max_k: int,
+    final_k: int = 5,
+    image_dir: Path | None = None,
+) -> dict[str, object]:
     output_dir.mkdir(parents=True, exist_ok=True)
+    image_dir = output_dir if image_dir is None else image_dir
+    image_dir.mkdir(parents=True, exist_ok=True)
     df = cargar_y_limpiar(input_path)
     model_df, variables = obtener_datos_modelo(df)
-    evaluacion, k_optimo, X = evaluar_k(variables, min_k=min_k, max_k=max_k)
+    evaluacion, k_silhouette, _ = evaluar_k(variables, min_k=min_k, max_k=max_k)
+    if final_k not in set(evaluacion["K"].astype(int)):
+        raise ValueError(
+            f"final_k={final_k} está fuera del rango evaluado "
+            f"({min_k}–{max_k})."
+        )
+    evaluacion["Es_Seleccionado"] = evaluacion["K"].eq(final_k)
 
     escalador = RobustScaler()
     X_final = escalador.fit_transform(variables)
     modelo_final = KMeans(
-        n_clusters=k_optimo,
+        n_clusters=final_k,
         init="k-means++",
         random_state=RANDOM_STATE,
         n_init=10,
@@ -323,16 +352,20 @@ def ejecutar(input_path: Path, output_dir: Path, min_k: int, max_k: int) -> dict
     evaluacion.to_csv(output_dir / "evaluacion_kmeans.csv", index=False, encoding="utf-8-sig")
     df.to_csv(output_dir / "dataset_empresas_clusters_powerbi.csv", index=False, encoding="utf-8-sig")
     resumen.to_csv(output_dir / "perfil_kpis_clusters.csv", index=False, encoding="utf-8-sig")
-    guardar_graficas(evaluacion, X_final, etiquetas, output_dir)
+    guardar_graficas(evaluacion, X_final, etiquetas, image_dir)
 
     return {
         "anio": int(df[YEAR_COLUMN].max()),
         "filas_periodo": len(df),
         "filas_modeladas": len(model_df),
-        "k_optimo": k_optimo,
+        "k_silhouette": k_silhouette,
+        "k_seleccionado": final_k,
         "k_codo": int(evaluacion.loc[evaluacion["Es_Codo"], "K"].iloc[0]),
-        "silhouette_optimo": float(
-            evaluacion.loc[evaluacion["K"].eq(k_optimo), "Silhouette_Score"].iloc[0]
+        "silhouette_maximo": float(
+            evaluacion.loc[evaluacion["K"].eq(k_silhouette), "Silhouette_Score"].iloc[0]
+        ),
+        "silhouette_seleccionado": float(
+            evaluacion.loc[evaluacion["K"].eq(final_k), "Silhouette_Score"].iloc[0]
         ),
         "evaluacion": evaluacion,
         "resumen": resumen,
@@ -344,19 +377,38 @@ def argumentos() -> argparse.Namespace:
     parser.add_argument(
         "--input",
         type=Path,
-        default=Path("10.000_Empresas_mas_Grandes_del_País_20260913.csv"),
+        default=Path("data/10.000_Empresas_mas_Grandes_del_País_20260913.csv"),
         help="Ruta al CSV fuente.",
     )
-    parser.add_argument("--output-dir", type=Path, default=Path("."), help="Carpeta de salida.")
+    parser.add_argument("--output-dir", type=Path, default=Path("data"), help="Carpeta de salida para CSV.")
+    parser.add_argument(
+        "--image-dir",
+        type=Path,
+        default=Path("images"),
+        help="Carpeta de salida para las gráficas.",
+    )
     parser.add_argument("--min-k", type=int, default=2, help="K mínimo a evaluar (por defecto: 2).")
     parser.add_argument("--max-k", type=int, default=10, help="K máximo a evaluar (por defecto: 10).")
+    parser.add_argument(
+        "--final-k",
+        type=int,
+        default=5,
+        help="K utilizado para el dataset final; por defecto 5 por criterio de negocio.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = argumentos()
     try:
-        resultado = ejecutar(args.input, args.output_dir, args.min_k, args.max_k)
+        resultado = ejecutar(
+            args.input,
+            args.output_dir,
+            args.min_k,
+            args.max_k,
+            args.final_k,
+            args.image_dir,
+        )
     except (FileNotFoundError, ValueError, OSError, ImportError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
@@ -365,8 +417,10 @@ def main() -> int:
     print(f"Filas del periodo: {resultado['filas_periodo']}")
     print(f"Filas modeladas: {resultado['filas_modeladas']}")
     print(f"K sugerido por codo: {resultado['k_codo']}")
-    print(f"K óptimo por Silhouette: {resultado['k_optimo']}")
-    print(f"Silhouette Score: {resultado['silhouette_optimo']:.4f}")
+    print(f"K máximo por Silhouette: {resultado['k_silhouette']}")
+    print(f"K seleccionado para segmentación: {resultado['k_seleccionado']}")
+    print(f"Silhouette máximo (K={resultado['k_silhouette']}): {resultado['silhouette_maximo']:.4f}")
+    print(f"Silhouette seleccionado (K={resultado['k_seleccionado']}): {resultado['silhouette_seleccionado']:.4f}")
     print(f"Archivos exportados en: {args.output_dir.resolve()}")
     return 0
 

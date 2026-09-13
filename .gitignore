@@ -1,2 +1,34 @@
-# local agents
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.venv/
+venv/
+env/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter / notebooks
+.ipynb_checkpoints/
+
+# Modelado y visualización local
+.matplotlib-cache/
+*.log
+
+# Power BI temporales y archivos de bloqueo
+*.tmp
+*.temp
+*.bak
+~$*.pbix
+*.pbix.lock
+
+# Sistema operativo / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Instrucciones privadas del agente local
 .agents/
