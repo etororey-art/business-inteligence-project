@@ -9,6 +9,20 @@ consumo analítico se realiza en Power BI mediante medidas DAX.
 > dataset original y del archivo `.pbix` cumple con las condiciones de la
 > fuente de datos y con las políticas de la organización.
 
+## Fuente de datos
+
+La fuente primaria es el conjunto público de Datos Abiertos Colombia:
+[10.000 Empresas más Grandes del País](https://www.datos.gov.co/Comercio-Industria-y-Turismo/10-000-Empresas-mas-Grandes-del-Pa-s/6cat-2gcs/about_data).
+
+La versión descargada y utilizada en este proyecto se conserva como
+`data/10.000_Empresas_mas_Grandes_del_País_20260913.csv`. El pipeline conserva
+el año de corte más reciente disponible en la fuente (2024) y genera los
+archivos derivados para Power BI.
+
+La [guía para el informe académico](docs/guia_informe_proyecto.md) propone el
+problema, la justificación de datos, la estructura de ETL, la interpretación y
+las limitaciones que el equipo debe desarrollar con sus capturas reales.
+
 ## Arquitectura del repositorio
 
 ```text
@@ -18,11 +32,13 @@ consumo analítico se realiza en Power BI mediante medidas DAX.
 │   ├── dataset_empresas_clusters_powerbi.csv               # dataset para Power BI
 │   ├── perfil_kpis_clusters.csv                            # KPIs por cluster
 │   └── evaluacion_kmeans.csv                               # WCSS, Silhouette y selección de K
+├── docs/
+│   └── guia_informe_proyecto.md                             # apoyo para el informe académico
 ├── images/
 │   ├── grafica_codo_kmeans.png
 │   └── dispersion_clusters_kmeans.png
 ├── powerbi/
-│   ├── empresas_segmentacion.pbix                           # agregar aquí el PBIX
+│   ├── empresas_segmentacion.pbix                           # archivo base del dashboard
 │   ├── medidas_dax_powerbi.md
 │   └── README.md
 ├── src/
@@ -31,11 +47,6 @@ consumo analítico se realiza en Power BI mediante medidas DAX.
 ├── requirements.txt
 └── README.md
 ```
-
-El archivo `.pbix` no estaba disponible en la carpeta de trabajo al momento
-de preparar esta estructura. Debe copiarse como
-`powerbi/empresas_segmentacion.pbix` antes del commit inicial; `.gitignore` no
-lo excluye.
 
 ## Inicio rápido para el equipo de Power BI
 
@@ -55,55 +66,24 @@ cd business-inteligence-project
 Después, para trabajar con Power BI:
 
 1. Abrir `powerbi/empresas_segmentacion.pbix`.
-2. Si Power BI solicita la ruta de origen, seleccionar
-   `data/dataset_empresas_clusters_powerbi.csv` desde **Transformar datos >
-   Configuración de origen de datos > Cambiar origen**.
-3. Confirmar que las columnas monetarias sean tipo decimal y que
+2. En **Transformar datos > Administrar parámetros**, actualizar el parámetro
+   `pRutaDatos` con la ruta absoluta de la carpeta `data` de la copia local
+   del repositorio. Por ejemplo:
+
+   ```text
+   C:\Users\Nombre\Downloads\business-inteligence-project\data
+   ```
+
+3. Seleccionar **Cerrar y aplicar** y después **Actualizar**.
+4. Confirmar que las columnas monetarias sean tipo decimal y que
    `Año de Corte`, `Cluster_ID` y `CIIU` tengan el tipo esperado.
-4. Crear las medidas DAX siguientes en la tabla `EmpresasClusters`.
+5. Crear las medidas como **Nueva medida** siguiendo la
+   [guía de medidas DAX](powerbi/medidas_dax_powerbi.md). Las fórmulas usan
+   `Fact_Empresas` y las dimensiones del modelo; no deben crearse como
+   columnas calculadas.
 
-### Medidas DAX base
-
-```DAX
-Total Empresas =
-COUNTROWS ( EmpresasClusters )
-
-Total Ingresos =
-SUM ( EmpresasClusters[INGRESOS OPERACIONALES] )
-
-Total Ganancia =
-SUM ( EmpresasClusters[GANANCIA (PÉRDIDA)] )
-
-Empresas Modeladas =
-CALCULATE (
-    [Total Empresas],
-    NOT ISBLANK ( EmpresasClusters[Cluster_ID] )
-)
-
-Margen Neto Global =
-DIVIDE ( [Total Ganancia], [Total Ingresos] )
-
-Endeudamiento Promedio =
-AVERAGE ( EmpresasClusters[Nivel_Endeudamiento] )
-
-% Empresas del Cluster =
-DIVIDE (
-    [Empresas Modeladas],
-    CALCULATE (
-        [Empresas Modeladas],
-        REMOVEFILTERS (
-            EmpresasClusters[Cluster_ID],
-            EmpresasClusters[Cluster_Nombre]
-        )
-    )
-)
-```
-
-Para tarjetas corporativas se recomienda usar `Margen Neto Global`, que es un
-ratio ponderado por ingresos. Para comparar la distribución de segmentos,
-usar `% Empresas del Cluster` con `Cluster_Nombre` en el eje o como filtro.
-El archivo `powerbi/medidas_dax_powerbi.md` contiene medidas adicionales para
-participación de ingresos, ranking y comparación contra el total.
+La guía detallada de arranque, incluyendo la configuración de `pRutaDatos`,
+está disponible en [powerbi/README.md](powerbi/README.md).
 
 ## Diseño sugerido del dashboard
 
