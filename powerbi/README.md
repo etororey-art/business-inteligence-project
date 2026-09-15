@@ -1,17 +1,44 @@
 # Archivo Power BI
 
-Coloque aquí `empresas_segmentacion.pbix` antes de publicar el repositorio.
-El archivo no estaba disponible en la carpeta de trabajo durante la
-organización inicial.
+El archivo `empresas_segmentacion.pbix` es la base del modelo de datos y del
+dashboard. Contiene `Fact_Empresas` y las dimensiones `Dim_Cluster`,
+`Dim_Sector`, `Dim_Geografia`, `Dim_CIIU` y `Dim_Periodo`.
 
-La fuente esperada es:
+## Bootstrap para el equipo
 
-```text
-../data/dataset_empresas_clusters_powerbi.csv
-```
+1. Clonar el repositorio o descargarlo como ZIP y extraerlo en una carpeta
+   local.
+2. Abrir `empresas_segmentacion.pbix` con Power BI Desktop.
+3. Seleccionar **Transformar datos > Administrar parámetros**.
+4. Editar `pRutaDatos` e indicar la ruta absoluta a la carpeta `data` dentro
+   de la copia local del repositorio. Ejemplo:
 
-Si el repositorio se clona en otra ruta, actualice la consulta de Power Query
-desde **Transformar datos > Configuración de origen de datos > Cambiar origen**.
+   ```text
+   C:\Users\Nombre\Documents\business-inteligence-project\data
+   ```
+
+5. Seleccionar **Cerrar y aplicar** y después **Actualizar**.
+6. Confirmar que las seis consultas cargaron sin errores:
+
+   ```text
+   Fact_Empresas
+   Dim_Cluster
+   Dim_Sector
+   Dim_Geografia
+   Dim_CIIU
+   Dim_Periodo
+   ```
+
+7. Crear las fórmulas como medidas siguiendo
+   [medidas_dax_powerbi.md](medidas_dax_powerbi.md).
+
+`File.Contents()` requiere una ruta absoluta; por eso no se debe sustituir el
+valor del parámetro por una ruta relativa como `data/dataset_empresas_clusters_powerbi.csv`.
+Las dimensiones son referencias de `Fact_Empresas`, por lo que solo hay que
+configurar `pRutaDatos` una vez.
+
+Este dataset es un derivado del conjunto público de Datos Abiertos Colombia:
+[10.000 Empresas más Grandes del País](https://www.datos.gov.co/Comercio-Industria-y-Turismo/10-000-Empresas-mas-Grandes-del-Pa-s/6cat-2gcs/about_data).
 
 ## Configuración importante del CSV
 
@@ -25,8 +52,8 @@ equivalente a:
 
 ```powerquery
 Csv.Document(
-    File.Contents("C:\\ruta\\al\\repositorio\\data\\dataset_empresas_clusters_powerbi.csv"),
-    [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]
+    File.Contents(pRutaDatos & "\\dataset_empresas_clusters_powerbi.csv"),
+    [Delimiter = ",", Columns = 19, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]
 )
 ```
 
