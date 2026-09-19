@@ -60,27 +60,84 @@ Texto sugerido para el informe:
 > rentabilidad y endeudamiento, mientras que las variables sectoriales y
 > geográficas hicieron posible contextualizar los clústeres en Power BI.
 
-## 3. ETL y modelo de datos en Power BI
+## 3. ETL, carga y modelo de datos
 
-### Extracción
+El proceso se divide en dos capas complementarias. Python realiza la preparación
+del archivo fuente y el modelamiento K-Means; Power BI carga el archivo final,
+construye el modelo estrella y presenta los resultados. Esta separación debe
+explicarse de forma explícita en el informe para no atribuir a Power Query
+transformaciones que se ejecutan en el script.
 
-La tabla de hechos se carga desde
-`data/dataset_empresas_clusters_powerbi.csv`. El PBIX usa el parámetro
-`pRutaDatos` para que cada integrante pueda indicar la carpeta `data` de su
-copia local del repositorio.
+### 3.1 Extracción y transformaciones en Python
 
-### Transformaciones realizadas
+El archivo fuente `10.000_Empresas_mas_Grandes_del_País_20260913.csv` se
+procesa en `src/pipeline_clusters_empresas.py`. Las transformaciones iniciales
+se ejecutan principalmente en las siguientes funciones:
 
-Documenten las acciones que se observan en Power Query:
+| Función | Transformación realizada | Resultado |
+|---|---|---|
+| `limpiar_numero()` | Elimina símbolos monetarios, interpreta separadores de miles y decimales, reconoce negativos entre paréntesis y convierte vacíos o textos no válidos en nulos. | Valores financieros comparables en formato numérico. |
+| `cargar_y_limpiar()` | Lee el CSV con codificación UTF-8, valida las columnas requeridas, normaliza espacios y saltos de línea de campos de texto, convierte las cinco columnas financieras y `Año de Corte` a valores numéricos. | Base limpia y tipificada. |
+| `cargar_y_limpiar()` | Conserva únicamente el año de corte más reciente disponible, que en la ejecución actual es 2024. | Universo analítico de 10.000 empresas del período seleccionado. |
+| `cargar_y_limpiar()` | Calcula `Margen_Neto`, `Nivel_Endeudamiento` y `Log_Ingresos`. | Variables financieras y de escala para el análisis. |
+| `obtener_datos_modelo()` | Reemplaza infinitos por nulos y selecciona solo filas con las tres variables del modelo disponibles. | Subconjunto válido para entrenar K-Means. |
+| `evaluar_k()` y `ejecutar()` | Escalan las variables con `RobustScaler`, evalúan K entre 2 y 10 con WCSS y Silhouette, entrenan K-Means y asignan el clúster. | Segmentación reproducible y diagnóstico para seleccionar K. |
+| `construir_resumen()` y `ejecutar()` | Construyen el resumen por clúster y exportan los archivos para Power BI. | Dataset final, KPIs por clúster y evaluación del modelo. |
 
-- Uso de coma como delimitador, UTF-8 y `QuoteStyle.Csv`.
-- `NIT` y `CIIU` configurados como texto.
-- Normalización de saltos de línea y espacios en los campos de texto.
-- Conversión de columnas financieras a número decimal.
-- Conservación del año de corte más reciente: 2024.
-- Manejo de empresas sin ratios modelables como `Sin datos financieros`, sin
-  eliminarlas del archivo final.
-- Creación de `Cluster_ID_Modelo` y `GeoKey`.
+Las empresas que no tienen ingresos, activos o ratios suficientes no se borran
+del archivo final. Se excluyen únicamente del entrenamiento y se identifican
+como `Sin datos financieros`. El script tampoco elimina duplicados ni imputa
+valores nulos; esa condición debe declararse como una decisión de calidad de
+datos y, si se requiere una regla de deduplicación, debe implementarse y
+documentarse por separado.
+
+La salida de Python se compone de:
+
+- `dataset_empresas_clusters_powerbi.csv`: tabla de detalle enriquecida con
+  indicadores y clúster asignado; es el origen de `Fact_Empresas`.
+- `perfil_kpis_clusters.csv`: resumen estático de empresas, ingresos, ganancia,
+  margen y endeudamiento por clúster; sirve para validar la narrativa.
+- `evaluacion_kmeans.csv`: métricas WCSS, Silhouette y selección de K.
+- Dos gráficas metodológicas: el diagnóstico del codo/Silhouette y la
+  proyección PCA de los clústeres.
+
+### 3.2 Carga, transformación y modelo en Power BI
+
+Power BI carga `dataset_empresas_clusters_powerbi.csv` mediante el parámetro
+`pRutaDatos`, que permite definir la ubicación local de la carpeta `data`. En
+Power Query se configura la lectura con delimitador coma, codificación UTF-8 y
+`QuoteStyle.Csv`; también se preservan `NIT` y `CIIU` como texto para evitar
+alterar identificadores.
+
+En esta capa se realizan las transformaciones necesarias para el modelo
+analítico, no el entrenamiento de K-Means:
+
+1. Se carga la tabla `Fact_Empresas` desde el CSV procesado por Python y se
+   validan los tipos de datos de montos, ratios, año e identificadores.
+2. Se crean o ajustan los campos técnicos requeridos por el modelo, como
+   `Cluster_ID_Modelo` y `GeoKey`.
+3. Se generan como referencias de la tabla de hechos las dimensiones
+   `Dim_Cluster`, `Dim_Periodo`, `Dim_Sector`, `Dim_Geografia` y `Dim_CIIU`.
+4. Se definen relaciones uno a muchos, con dirección de filtro única desde las
+   dimensiones hacia `Fact_Empresas`.
+5. Se crean medidas DAX, por ejemplo `Ingresos totales`, `Ganancia total`,
+   `Margen neto ponderado` y `Nivel de endeudamiento ponderado`, para que los
+   resultados respondan a los segmentadores del dashboard.
+
+Las medidas DAX pertenecen a la capa semántica del modelo: calculan indicadores
+en tiempo de consulta y no reemplazan las transformaciones ni el algoritmo que
+se ejecutan en Python.
+
+### Texto sugerido para el informe
+
+> El ETL se implementó en dos etapas. En Python se realizó la extracción del
+> CSV público, la normalización de campos de texto y valores financieros, la
+> selección del período 2024, el cálculo de indicadores y la segmentación
+> K-Means. Luego se exportó un dataset enriquecido para Power BI. En Power Query
+> se configuró la carga del archivo final, se validaron los tipos de datos y se
+> construyó un modelo estrella con dimensiones de clúster, período, sector,
+> geografía y CIIU. Finalmente, las medidas DAX permitieron que los KPIs y los
+> visuales se actualizaran de forma interactiva según los filtros aplicados.
 
 ### Modelo estrella
 
