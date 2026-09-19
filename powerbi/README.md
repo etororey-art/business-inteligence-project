@@ -29,7 +29,9 @@ dashboard. Contiene `Fact_Empresas` y las dimensiones `Dim_Cluster`,
    Dim_Periodo
    ```
 
-7. Crear las fórmulas como medidas siguiendo
+7. Actualizar el reporte y validar la interacción de filtros en las páginas
+   `Contexto Nacional`, `Segmentación K-MEANS` y `Análisis Financiero`. Las
+   medidas DAX utilizadas están documentadas en
    [medidas_dax_powerbi.md](medidas_dax_powerbi.md).
 
 `File.Contents()` requiere una ruta absoluta; por eso no se debe sustituir el
@@ -59,3 +61,14 @@ Csv.Document(
 
 El pipeline normaliza saltos de línea embebidos en `RAZÓN SOCIAL` para evitar
 que Power Query confunda una parte del nombre con un nuevo registro.
+
+## Páginas del reporte
+
+El PBIX contiene tres páginas de análisis:
+
+1. **Contexto Nacional:** presenta los KPIs globales y permite filtrar por
+   región, departamento, macrosector y supervisor.
+2. **Segmentación K-MEANS:** permite comparar la distribución, escala,
+   endeudamiento y perfil financiero de los clústeres.
+3. **Análisis Financiero:** compara margen, endeudamiento, ganancia y
+   patrimonio por clúster, con una dispersión de escala y resultado.

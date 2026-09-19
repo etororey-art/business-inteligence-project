@@ -77,38 +77,44 @@ Después, para trabajar con Power BI:
 3. Seleccionar **Cerrar y aplicar** y después **Actualizar**.
 4. Confirmar que las columnas monetarias sean tipo decimal y que
    `Año de Corte`, `Cluster_ID` y `CIIU` tengan el tipo esperado.
-5. Crear las medidas como **Nueva medida** siguiendo la
-   [guía de medidas DAX](powerbi/medidas_dax_powerbi.md). Las fórmulas usan
-   `Fact_Empresas` y las dimensiones del modelo; no deben crearse como
-   columnas calculadas.
+5. Actualizar el reporte y confirmar que las tarjetas, gráficos y
+   segmentadores respondan a los filtros. Las medidas DAX usadas por el
+   dashboard se documentan en la
+   [guía de medidas DAX](powerbi/medidas_dax_powerbi.md).
 
 La guía detallada de arranque, incluyendo la configuración de `pRutaDatos`,
 está disponible en [powerbi/README.md](powerbi/README.md).
 
-## Diseño sugerido del dashboard
+## Dashboard implementado
 
 ### Página 1 — Contexto Nacional
 
-- Tarjetas: `Total Empresas`, `Total Ingresos`, `Total Ganancia`, `Margen Neto Global`.
-- Mapa o matriz por `REGIÓN`, `DEPARTAMENTO DOMICILIO` y `MACROSECTOR`.
-- Barras de ingresos y ganancia por macrosector.
-- Segmentadores de año, región, supervisor y macrosector.
+- Tarjetas de empresas, ingresos totales, ganancia total, patrimonio total y
+  margen neto ponderado.
+- Barras de distribución de empresas y de ingresos/ganancia por macrosector.
+- Matriz `Región/Macrosector` para comparar empresas, ingresos y ganancia.
+- Segmentadores de región, departamento, macrosector y supervisor.
 
 ### Página 2 — Segmentación K-Means
 
-- Barras de cantidad de empresas por `Cluster_Nombre`.
-- Dispersión o matriz de `Margen_Neto` frente a `Nivel_Endeudamiento`.
-- Tarjetas de margen, endeudamiento, ingresos y participación para el cluster seleccionado.
-- Incorporar `images/grafica_codo_kmeans.png` y
-  `images/dispersion_clusters_kmeans.png` como apoyo metodológico.
+- Segmentador para explorar cada clúster.
+- Barras de distribución de empresas, ingresos promedio y endeudamiento promedio
+  por clúster.
+- Dispersión de margen neto ponderado frente a endeudamiento promedio.
+- Tabla de perfil financiero con empresas, ingresos promedio y endeudamiento
+  promedio por clúster.
 
-### Página 3 — Explorador de Empresas
+### Página 3 — Análisis Financiero
 
-- Tabla detallada con `RAZÓN SOCIAL`, `NIT`, `MACROSECTOR`, región, ingresos,
-  ganancia, margen, endeudamiento y cluster.
-- Filtros por cluster, sector, departamento, ciudad y rango de ingresos.
-- Formato condicional para margen negativo, endeudamiento alto y empresas sin
-  datos financieros suficientes.
+- Tarjetas de ganancia total y margen neto ponderado.
+- Comparación por clúster de margen neto ponderado, endeudamiento promedio,
+  ganancia total y patrimonio total.
+- Dispersión para relacionar número de empresas, ingresos promedio y ganancia
+  total de cada clúster.
+
+Las gráficas `images/grafica_codo_kmeans.png` y
+`images/dispersion_clusters_kmeans.png` se conservan como respaldo metodológico
+del modelo y pueden incluirse en el informe o la presentación.
 
 ## Ficha técnica del modelo ML
 

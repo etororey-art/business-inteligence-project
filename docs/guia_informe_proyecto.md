@@ -104,6 +104,12 @@ que las medidas respondan correctamente a los segmentadores.
 2. Pasos de limpieza y tipos de datos de la consulta.
 3. Vista de modelo con las cinco dimensiones y sus relaciones 1:*.
 4. Una medida DAX creada, por ejemplo `Margen neto ponderado`.
+5. Página **Contexto Nacional**, mostrando las tarjetas, filtros y la matriz
+   Región/Macrosector.
+6. Página **Segmentación K-MEANS**, mostrando el perfil financiero, la
+   distribución y la dispersión de clústeres.
+7. Página **Análisis Financiero**, mostrando la comparación de margen,
+   endeudamiento, ganancia y patrimonio por clúster.
 
 ## 4. Descripción del algoritmo K-Means
 
@@ -166,16 +172,25 @@ Texto sugerido para la interpretación:
 > comparación con ingresos pequeños. Estos casos se conservan por trazabilidad,
 > pero requieren una revisión individual antes de emitir recomendaciones.
 
-## 6. Recomendaciones para el dashboard y la narrativa
+## 6. Dashboard implementado y narrativa
 
-La historia visual puede seguir esta secuencia:
+La narrativa del reporte se organiza en las tres páginas implementadas:
 
-1. **Panorama nacional:** ¿cuántas empresas, ingresos y ganancia se analizan?
-2. **Segmentación:** ¿cómo se distribuyen las empresas entre perfiles y qué
-   diferencia sus márgenes y endeudamiento?
-3. **Exploración:** ¿qué sectores, territorios y empresas explican cada
-   perfil?
-4. **Acción:** ¿qué grupos requieren seguimiento, comparación o validación?
+1. **Contexto Nacional:** responde cuántas empresas, ingresos, ganancia,
+   patrimonio y margen se analizan; los filtros y la matriz permiten ubicar los
+   resultados por territorio, macrosector y supervisor.
+2. **Segmentación K-MEANS:** muestra cómo se distribuyen las empresas entre
+   perfiles y compara sus ingresos promedio, endeudamiento y margen neto.
+3. **Análisis Financiero:** profundiza la comparación de margen, endeudamiento,
+   ganancia y patrimonio por clúster para orientar la revisión de perfiles.
+
+Texto sugerido para presentar el dashboard:
+
+> El dashboard inicia con un panorama nacional filtrable, continúa con la
+> comparación de los perfiles descubiertos por K-Means y finaliza con el
+> análisis financiero por clúster. Esta secuencia permite pasar de una visión
+> agregada a una lectura específica de rentabilidad, endeudamiento, ganancia y
+> patrimonio, sin interpretar los clústeres pequeños como tendencias generales.
 
 Recomendaciones derivadas del análisis:
 
