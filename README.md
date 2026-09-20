@@ -19,9 +19,7 @@ La versión descargada y utilizada en este proyecto se conserva como
 el año de corte más reciente disponible en la fuente (2024) y genera los
 archivos derivados para Power BI.
 
-La [guía para el informe académico](docs/guia_informe_proyecto.md) propone el
-problema, la justificación de datos, la estructura de ETL, la interpretación y
-las limitaciones que el equipo debe desarrollar con sus capturas reales.
+El [Informe Final](business-inteligence-project\docs\Informe_Final.docx) contiene el informe detallado con todos los resultados obtenidos durante el académico.
 
 ## Arquitectura del repositorio
 
