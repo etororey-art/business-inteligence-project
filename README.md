@@ -19,7 +19,7 @@ La versión descargada y utilizada en este proyecto se conserva como
 el año de corte más reciente disponible en la fuente (2024) y genera los
 archivos derivados para Power BI.
 
-El [Informe Final](business-inteligence-project\docs\Informe_Final.docx) contiene el informe detallado con todos los resultados obtenidos durante el académico.
+El [Informe Final](docs/Informe_Final.docx) contiene el informe detallado con todos los resultados obtenidos durante el académico.
 
 ## Arquitectura del repositorio
 
