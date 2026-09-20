@@ -1,0 +1,3 @@
+﻿Cluster_ID,Cluster_Nombre,Empresas,Ingresos_Totales,Ingresos_Promedio,Ingresos_Mediana,Ganancia_Total,Ganancia_Promedio,Activos_Totales,Pasivos_Totales,Patrimonio_Total,Margen_Neto_Promedio,Margen_Neto_Mediana,Nivel_Endeudamiento_Promedio,Nivel_Endeudamiento_Mediana,Margen_Neto_Ponderado,Nivel_Endeudamiento_Ponderado,Distribucion_Pct
+0,Grandes en Transición,9753,1755.7,0.18001640520865375,0.05,114.88,0.011778939813390751,2447.18,1264.31,1180.95,0.0404243274858471,0.0,0.5504678956637902,0.5,0.06543259098934898,0.5166395606371416,0.9996924969249692
+1,Especialistas Sólidas,3,0.11,0.03666666666666667,0.04,1.31,0.4366666666666667,11.03,1.31,9.72,11.433333333333335,7.8,0.1151406254569941,0.1458046767537827,11.90909090909091,0.1187669990933817,0.0003075030750307503
